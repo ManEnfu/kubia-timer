@@ -1,6 +1,5 @@
-pub use solve::{SolveTime, Solve, Penalty, SolvesSeq};
 pub use session::Session;
+pub use solve::{Penalty, Solve, SolveTime, SolvesSeq};
 
-mod solve;
 mod session;
-
+mod solve;

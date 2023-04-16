@@ -1,4 +1,10 @@
-use std::{time::{Duration, SystemTime}, cmp::Ordering, ops::{Add, Div, Sub}, fmt::Display, iter::Sum};
+use std::{
+    cmp::Ordering,
+    fmt::Display,
+    iter::Sum,
+    ops::{Add, Div, Sub},
+    time::{Duration, SystemTime},
+};
 
 /// Penalty of a solve.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -94,17 +100,14 @@ impl Add for SolveTime {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        let time = self.recorded_time().unwrap_or_default()
-            + rhs.recorded_time().unwrap_or_default();
+        let time =
+            self.recorded_time().unwrap_or_default() + rhs.recorded_time().unwrap_or_default();
         let penalty = if self.is_dnf() || rhs.is_dnf() {
             Some(Penalty::Dnf)
         } else {
             None
         };
-        Self {
-            time,
-            penalty,
-        }
+        Self { time, penalty }
     }
 }
 
@@ -112,17 +115,14 @@ impl Sub for SolveTime {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        let time = self.recorded_time().unwrap_or_default()
-            - rhs.recorded_time().unwrap_or_default();
+        let time =
+            self.recorded_time().unwrap_or_default() - rhs.recorded_time().unwrap_or_default();
         let penalty = if self.is_dnf() || rhs.is_dnf() {
             Some(Penalty::Dnf)
         } else {
             None
         };
-        Self {
-            time,
-            penalty,
-        }
+        Self { time, penalty }
     }
 }
 
@@ -164,9 +164,7 @@ impl SolvesSeq for &[Solve] {
             return None;
         }
 
-        let sum: SolveTime = self.iter()
-            .map(|s| s.time)
-            .sum();
+        let sum: SolveTime = self.iter().map(|s| s.time).sum();
         Some(sum / len)
     }
 
@@ -176,17 +174,9 @@ impl SolvesSeq for &[Solve] {
             return None;
         }
 
-        let max = self.iter()
-            .map(|s| s.time)
-            .max()
-            .unwrap();
-        let min = self.iter()
-            .map(|s| s.time)
-            .min()
-            .unwrap();
-        let sum: SolveTime = self.iter()
-            .map(|s| s.time)
-            .sum();
+        let max = self.iter().map(|s| s.time).max().unwrap();
+        let min = self.iter().map(|s| s.time).min().unwrap();
+        let sum: SolveTime = self.iter().map(|s| s.time).sum();
         Some((sum - max - min) / (len - 2))
     }
 }
@@ -206,7 +196,7 @@ fn display_time(time: &Duration) -> String {
 #[cfg(test)]
 mod test {
     use super::*;
-    
+
     #[test]
     fn get_recorded_time() {
         assert_eq!(
@@ -218,17 +208,17 @@ mod test {
             SolveTime::new(Duration::from_millis(62_920), None).recorded_time(),
             Some(Duration::from_millis(62_920)),
         );
-        
+
         assert_eq!(
             SolveTime::new(Duration::from_millis(142_250), None).recorded_time(),
             Some(Duration::from_millis(142_250)),
         );
-        
+
         assert_eq!(
             SolveTime::new(Duration::from_millis(42_020), Some(Penalty::Plus2)).recorded_time(),
             Some(Duration::from_millis(44_020)),
         );
-        
+
         assert_eq!(
             SolveTime::new(Duration::from_millis(12_400), Some(Penalty::Dnf)).recorded_time(),
             None,
@@ -246,21 +236,20 @@ mod test {
             SolveTime::new(Duration::from_millis(62_920), None).to_string(),
             "1:02.92".to_string(),
         );
-        
+
         assert_eq!(
             SolveTime::new(Duration::from_millis(142_250), None).to_string(),
             "2:22.25".to_string(),
         );
-        
+
         assert_eq!(
             SolveTime::new(Duration::from_millis(42_020), Some(Penalty::Plus2)).to_string(),
             "44.02+".to_string(),
         );
-        
+
         assert_eq!(
             SolveTime::new(Duration::from_millis(12_400), Some(Penalty::Dnf)).to_string(),
             "DNF".to_string(),
         );
     }
-
 }

@@ -1,10 +1,19 @@
 use std::time::Duration;
 
-use crate::data::{SolveTime, Penalty};
+use iced::{Application, Settings};
 
-pub mod data;
+use crate::{
+    application::KubiaTimer,
+    data::{Penalty, SolveTime},
+};
+
 pub mod application;
+pub mod data;
 
-fn main() {
-    println!("{}", SolveTime::new(Duration::new(124, 10_000_000), Some(Penalty::Dnf)));
+fn main() -> iced::Result {
+    println!(
+        "{}",
+        SolveTime::new(Duration::new(124, 10_000_000), Some(Penalty::Dnf))
+    );
+    KubiaTimer::run(Settings::default())
 }
