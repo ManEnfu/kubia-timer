@@ -11,9 +11,6 @@ pub mod application;
 pub mod data;
 
 fn main() -> iced::Result {
-    println!(
-        "{}",
-        SolveTime::new(Duration::new(124, 10_000_000), Some(Penalty::Dnf))
-    );
+    env_logger::init();
     KubiaTimer::run(Settings::default())
 }

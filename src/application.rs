@@ -1,13 +1,16 @@
 use iced::{
     keyboard::{self, KeyCode},
-    subscription, time, widget, Color, Command, Event, Length, Subscription,
+    subscription, time, widget, Alignment, Color, Command, Event, Length, Subscription,
 };
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
+
+use crate::data::{Session, Solve, SolveTime};
 
 pub struct KubiaTimer {
     duration: Duration,
     last_pressed: Instant,
     state: State,
+    session: Session,
 }
 
 pub enum State {
@@ -39,6 +42,7 @@ impl iced::Application for KubiaTimer {
                 duration: Duration::default(),
                 last_pressed: Instant::now(),
                 state: State::Idle { pressed: false },
+                session: Session::new(),
             },
             iced::Command::none(),
         )
@@ -85,6 +89,12 @@ impl iced::Application for KubiaTimer {
 
             State::Timing { last_tick } => match message {
                 Message::Press => {
+                    log::info!("Solve: {}", SolveTime::new(self.duration, None));
+                    self.session.add_solve(Solve {
+                        time: SolveTime::new(self.duration, None),
+                        timestamp: SystemTime::now(),
+                        scramble: "".to_string(),
+                    });
                     self.state = State::Finished;
                 }
                 Message::Tick(now) => {
@@ -130,22 +140,54 @@ impl iced::Application for KubiaTimer {
 
     fn view(&self) -> iced::Element<'_, Self::Message, iced::Renderer<Self::Theme>> {
         let seconds = self.duration.as_secs();
-
-        let duration_label = widget::text(format!(
-            "{:0>2}:{:0>2}.{:0>2}",
-            seconds / 60,
-            seconds % 60,
-            self.duration.subsec_millis() / 10,
-        ))
-        .style(match self.state {
+        let duration_label_color = match self.state {
             State::Idle { pressed: true } => Color::new(1.0, 0.0, 0.0, 1.0),
             State::Finished => Color::new(1.0, 0.0, 0.0, 1.0),
             State::Ready => Color::new(0.0, 1.0, 0.0, 1.0),
             _ => Color::new(0.0, 0.0, 0.0, 1.0),
-        })
-        .size(40);
+        };
 
-        widget::container(duration_label)
+        let duration_text = widget::row![
+            widget::text(if seconds >= 60 {
+                format!("{:0>1}:{:0>2}", seconds / 60, seconds % 60,)
+            } else {
+                format!("{:0>1}", seconds,)
+            })
+            .style(duration_label_color)
+            .size(120),
+            widget::text(format!(".{:0>2}", self.duration.subsec_millis() / 10,))
+                .style(duration_label_color)
+                .size(90),
+        ]
+        .align_items(Alignment::End);
+
+        let mut center_content = widget::column![duration_text,]
+            .spacing(12)
+            .align_items(Alignment::Center);
+
+        if !matches!(self.state, State::Ready | State::Timing { .. }) {
+            center_content = center_content
+                .push(
+                    widget::text(format!(
+                        "Ao5: {}",
+                        self.session
+                            .last_ao5()
+                            .map_or("--".to_string(), |s| s.to_string()),
+                    ))
+                    .size(30),
+                )
+                .push(
+                    widget::text(format!(
+                        "Ao12: {}",
+                        self.session
+                            .last_ao12()
+                            .map_or("--".to_string(), |s| s.to_string()),
+                    ))
+                    .size(30),
+                );
+        }
+
+        widget::container(center_content)
             .width(Length::Fill)
             .height(Length::Fill)
             .center_x()
