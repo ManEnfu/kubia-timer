@@ -7,7 +7,7 @@ use std::{
 };
 
 /// Penalty of a solve.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Penalty {
     /// +2
     Plus2,
@@ -16,12 +16,12 @@ pub enum Penalty {
 }
 
 /// Time of a solve.
-#[derive(Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct SolveTime {
     /// The measured time.
-    time: Duration,
+    pub time: Duration,
     /// The penalty of the solve.
-    penalty: Option<Penalty>,
+    pub penalty: Option<Penalty>,
 }
 
 impl SolveTime {
@@ -150,7 +150,7 @@ pub trait SolvesSeq {
 }
 
 /// A solve.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Solve {
     pub time: SolveTime,
     pub timestamp: SystemTime,
@@ -174,10 +174,17 @@ impl SolvesSeq for &[Solve] {
             return None;
         }
 
-        let max = self.iter().map(|s| s.time).max().unwrap();
-        let min = self.iter().map(|s| s.time).min().unwrap();
-        let sum: SolveTime = self.iter().map(|s| s.time).sum();
-        Some((sum - max - min) / (len - 2))
+        let it = self.iter().map(|s| s.time).enumerate();
+        let (imax, _max) = it.clone().max_by_key(|&(_, st)| st)?;
+        let (imin, _min) = it.clone().min_by_key(|&(_, st)| st)?;
+        let sum = it.fold(SolveTime::default(), |acc, (i, st)| {
+            if i != imax && i != imin {
+                acc + st
+            } else {
+                acc
+            }
+        });
+        Some(sum / (len - 2))
     }
 }
 
