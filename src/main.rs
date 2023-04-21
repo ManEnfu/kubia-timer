@@ -1,16 +1,23 @@
-use std::time::Duration;
+#![allow(clippy::single_match)]
 
-use iced::{Application, Settings};
+use iced::{window, Application};
 
-use crate::{
-    application::KubiaTimer,
-    data::{Penalty, SolveTime},
-};
+use crate::application::KubiaTimer;
 
 pub mod application;
 pub mod data;
 
+pub mod tangible;
+
 fn main() -> iced::Result {
     env_logger::init();
-    KubiaTimer::run(Settings::default())
+
+    KubiaTimer::run(iced::Settings {
+        default_text_size: 18.0,
+        window: window::Settings {
+            size: (800, 600),
+            ..Default::default()
+        },
+        ..Default::default()
+    })
 }

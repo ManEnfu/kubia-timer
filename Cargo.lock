@@ -1506,6 +1506,8 @@ dependencies = [
  "iced",
  "iced_lazy",
  "log",
+ "once_cell",
+ "palette",
 ]
 
 [[package]]
