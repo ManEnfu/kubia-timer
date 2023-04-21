@@ -6,7 +6,7 @@ use palette::{FromColor, Hsl, Srgb};
 pub struct BackgroundColor {
     pub base: Color,
     pub hover: Color,
-    pub active: Color,
+    pub strong: Color,
 }
 
 impl BackgroundColor {
@@ -14,7 +14,7 @@ impl BackgroundColor {
         Self {
             base,
             hover: base,
-            active: base,
+            strong: base,
         }
     }
 
@@ -32,16 +32,16 @@ impl BackgroundColor {
         }
     }
 
-    pub fn darken_active(self, amount: f32) -> Self {
+    pub fn darken_strong(self, amount: f32) -> Self {
         Self {
-            active: darken(self.base, amount),
+            strong: darken(self.base, amount),
             ..self
         }
     }
 
-    pub fn lighten_active(self, amount: f32) -> Self {
+    pub fn lighten_strong(self, amount: f32) -> Self {
         Self {
-            active: lighten(self.base, amount),
+            strong: lighten(self.base, amount),
             ..self
         }
     }
@@ -50,29 +50,29 @@ impl BackgroundColor {
 #[derive(Debug, Default, Clone, Copy)]
 pub struct ColorGroup {
     pub base: Color,
-    pub bg: Color,
+    pub bg: BackgroundColor,
     pub fg: Color,
-    pub base_hover: Color,
-    pub bg_hover: Color,
+    // pub base_hover: Color,
+    // pub bg_hover: Color,
 }
 
-impl ColorGroup {
-    pub fn darken_hover(self, amount: f32) -> Self {
-        Self {
-            base_hover: darken(self.base, amount),
-            bg_hover: darken(self.bg, amount),
-            ..self
-        }
-    }
+// impl ColorGroup {
+//     pub fn darken_hover(self, amount: f32) -> Self {
+//         Self {
+//             base_hover: darken(self.base, amount),
+//             bg_hover: darken(self.bg, amount),
+//             ..self
+//         }
+//     }
 
-    pub fn lighten_hover(self, amount: f32) -> Self {
-        Self {
-            base_hover: lighten(self.base, amount),
-            bg_hover: lighten(self.bg, amount),
-            ..self
-        }
-    }
-}
+//     pub fn lighten_hover(self, amount: f32) -> Self {
+//         Self {
+//             base_hover: lighten(self.base, amount),
+//             bg_hover: lighten(self.bg, amount),
+//             ..self
+//         }
+//     }
+// }
 
 #[derive(Debug, Clone, Copy)]
 pub enum NamedColor {
@@ -120,75 +120,6 @@ impl Palette {
     }
 }
 
-pub static LIGHT: Lazy<Palette> = Lazy::new(|| Palette {
-    neutral: ColorGroup {
-        base: color!(0x000000, 0.1),
-        bg: color!(0x000000, 0.1),
-        fg: color!(0x000000, 0.8),
-        bg_hover: color!(0x000000, 0.2),
-        ..Default::default()
-    },
-    accent: ColorGroup {
-        base: color!(0x1c71d8),
-        bg: color!(0x3584e4),
-        fg: color!(0xffffff),
-        ..Default::default()
-    }
-    .lighten_hover(0.1),
-    destructive: ColorGroup {
-        base: color!(0xc01c28),
-        bg: color!(0xe01b24),
-        fg: color!(0xffffff),
-        ..Default::default()
-    }
-    .lighten_hover(0.1),
-    success: ColorGroup {
-        base: color!(0x1b8553),
-        bg: color!(0x2ec27e),
-        fg: color!(0xffffff),
-        ..Default::default()
-    }
-    .darken_hover(0.1),
-    warning: ColorGroup {
-        base: color!(0x9c6e03),
-        bg: color!(0xe5a50a),
-        fg: color!(0x000000, 0.8),
-        ..Default::default()
-    }
-    .darken_hover(0.1),
-    error: ColorGroup {
-        base: color!(0xc01c28),
-        bg: color!(0xe01b24),
-        fg: color!(0xffffff),
-        ..Default::default()
-    }
-    .lighten_hover(0.1),
-    flat: ColorGroup {
-        bg: color!(0x000000, 0.0),
-        fg: color!(0x000000, 0.8),
-        bg_hover: color!(0x000000, 0.1),
-        ..Default::default()
-    },
-    window: ColorGroup {
-        base: color!(0xfafafa),
-        bg: color!(0xfafafa),
-        fg: color!(0x000000, 0.8),
-        ..Default::default()
-    },
-    view: ColorGroup {
-        base: color!(0xffffff),
-        bg: color!(0xffffff),
-        fg: color!(0x000000, 0.8),
-        ..Default::default()
-    },
-    header: ColorGroup {
-        base: color!(0xffffff),
-        bg: color!(0xffffff),
-        fg: color!(0x000000, 0.8),
-        ..Default::default()
-    },
-});
-
 fn darken(color: Color, amount: f32) -> Color {
     let mut hsl = Hsl::from_color(Srgb::from(color));
 
@@ -204,3 +135,74 @@ fn lighten(color: Color, amount: f32) -> Color {
 
     Srgb::from_color(hsl).into()
 }
+
+pub static LIGHT: Lazy<Palette> = Lazy::new(|| Palette {
+    neutral: ColorGroup {
+        base: color!(0x000000, 0.3),
+        bg: BackgroundColor {
+            base: color!(0x000000, 0.3),
+            hover: color!(0x000000, 0.45),
+            strong: color!(0x000000, 0.60),
+        },
+        fg: color!(0x202020),
+    },
+    accent: ColorGroup {
+        base: color!(0x1c71d8),
+        bg: BackgroundColor::new(color!(0x3584e4))
+            .lighten_hover(0.1)
+            .darken_strong(0.1),
+        fg: color!(0xffffff),
+    },
+    destructive: ColorGroup {
+        base: color!(0xc01c28),
+        bg: BackgroundColor::new(color!(0xe01b24))
+            .lighten_hover(0.1)
+            .darken_strong(0.1),
+        fg: color!(0xffffff),
+    },
+    success: ColorGroup {
+        base: color!(0x1b8553),
+        bg: BackgroundColor::new(color!(0x2ec27e))
+            .lighten_hover(0.1)
+            .darken_strong(0.1),
+        fg: color!(0xffffff),
+    },
+    warning: ColorGroup {
+        base: color!(0x9c6e03),
+        bg: BackgroundColor::new(color!(0xe5a50a))
+            .darken_hover(0.1)
+            .darken_strong(0.2),
+        fg: color!(0x202020),
+    },
+    error: ColorGroup {
+        base: color!(0xc01c28),
+        bg: BackgroundColor::new(color!(0xe01b24))
+            .lighten_hover(0.1)
+            .darken_strong(0.1),
+        fg: color!(0xffffff),
+    },
+    flat: ColorGroup {
+        base: color!(0x000000, 0.0),
+        bg: BackgroundColor {
+            base: color!(0x000000, 0.0),
+            hover: color!(0x000000, 0.2),
+            strong: color!(0x000000, 0.4),
+        },
+        fg: color!(0x202020),
+    },
+    window: ColorGroup {
+        base: color!(0xfafafa),
+        bg: BackgroundColor::new(color!(0xfafafa)).darken_strong(0.15),
+        fg: color!(0x202020),
+    },
+    view: ColorGroup {
+        base: color!(0xffffff),
+        bg: BackgroundColor::new(color!(0xffffff)).darken_strong(0.15),
+        fg: color!(0x202020),
+    },
+    header: ColorGroup {
+        base: color!(0xffffff),
+        bg: BackgroundColor::new(color!(0xffffff)).darken_strong(0.15),
+        fg: color!(0x202020),
+    },
+});

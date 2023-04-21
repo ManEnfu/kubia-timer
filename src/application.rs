@@ -1,11 +1,14 @@
 use iced::{
     alignment,
     keyboard::{self, KeyCode},
-    subscription, theme, time, widget, Alignment, Color, Command, Event, Length, Subscription,
+    subscription, theme, time, widget, Alignment, Application, Color, Command, Event, Length,
+    Subscription,
 };
 use std::time::{Duration, Instant, SystemTime};
 
 use crate::data::{self, Session, Solve, SolveTime};
+
+use crate::tangible;
 
 pub struct KubiaTimer {
     solve_time: data::SolveTime,
@@ -49,7 +52,7 @@ impl iced::Application for KubiaTimer {
 
     type Message = Message;
 
-    type Theme = iced::Theme;
+    type Theme = tangible::Theme;
 
     type Flags = ();
 
@@ -197,7 +200,7 @@ impl iced::Application for KubiaTimer {
 }
 
 impl KubiaTimer {
-    fn center_timer(&self) -> iced::Element<'_, Message, iced::Renderer<iced::Theme>> {
+    fn center_timer(&self) -> iced::Element<'_, Message, iced::Renderer<tangible::Theme>> {
         iced_lazy::responsive(move |size| {
             let compact = size.width <= 450.0;
             let duration_text_font_size = if compact
@@ -211,13 +214,13 @@ impl KubiaTimer {
             } else {
                 120.0
             };
-            let averages_text_font_size = if compact { 20.0 } else { 30.0 };
 
+            let theme = self.theme();
+            let palette = theme.palette();
             let duration_text_color = match self.state {
-                State::Idle { pressed: true } => Color::new(1.0, 0.0, 0.0, 1.0),
-                State::Finished => Color::new(1.0, 0.0, 0.0, 1.0),
-                State::Ready => Color::new(0.0, 1.0, 0.0, 1.0),
-                _ => Color::new(0.0, 0.0, 0.0, 1.0),
+                State::Idle { pressed: true } | State::Finished => palette.destructive.base,
+                State::Ready => palette.success.base,
+                _ => palette.view.fg,
             };
 
             let duration_text = if let Some(duration) = self.solve_time.recorded_time() {
@@ -247,32 +250,48 @@ impl KubiaTimer {
 
             let center_content = {
                 let mut center_content = widget::column![duration_text,]
-                    .spacing(12)
+                    .spacing(16)
                     .align_items(Alignment::Center);
 
                 if !matches!(self.state, State::Ready | State::Timing { .. }) {
                     if self.link_to_last_solve {
                         center_content = center_content.push(self.penalty_selector());
                     }
-                    center_content = center_content
-                        .push(
-                            widget::text(format!(
-                                "Ao5: {}",
-                                self.session
-                                    .last_ao5()
-                                    .map_or("--".to_string(), |s| s.to_string()),
-                            ))
-                            .size(averages_text_font_size),
-                        )
-                        .push(
-                            widget::text(format!(
-                                "Ao12: {}",
-                                self.session
-                                    .last_ao12()
-                                    .map_or("--".to_string(), |s| s.to_string()),
-                            ))
-                            .size(averages_text_font_size),
-                        );
+                    center_content = center_content.push(
+                        widget::column![
+                            widget::row![
+                                widget::text("Ao5")
+                                    .width(Length::FillPortion(1))
+                                    .horizontal_alignment(alignment::Horizontal::Right),
+                                widget::text(format!(
+                                    "{}",
+                                    self.session
+                                        .last_ao5()
+                                        .map_or("--".to_string(), |s| s.to_string()),
+                                ))
+                                .width(Length::FillPortion(1))
+                                .horizontal_alignment(alignment::Horizontal::Left),
+                            ]
+                            .spacing(8)
+                            .width(Length::Fixed(200.0)),
+                            widget::row![
+                                widget::text("Ao12")
+                                    .width(Length::FillPortion(1))
+                                    .horizontal_alignment(alignment::Horizontal::Right),
+                                widget::text(format!(
+                                    "{}",
+                                    self.session
+                                        .last_ao12()
+                                        .map_or("--".to_string(), |s| s.to_string()),
+                                ))
+                                .width(Length::FillPortion(1))
+                                .horizontal_alignment(alignment::Horizontal::Left),
+                            ]
+                            .spacing(8)
+                            .width(Length::Fixed(200.0)),
+                        ]
+                        .spacing(8),
+                    )
                 }
 
                 center_content
@@ -292,34 +311,43 @@ impl KubiaTimer {
         &self,
         label: &str,
         penalty: Option<data::Penalty>,
-    ) -> iced::Element<'_, Message, iced::Renderer<iced::Theme>> {
-        let label = widget::text(label);
+    ) -> iced::Element<'_, Message, iced::Renderer<tangible::Theme>> {
+        let label = widget::text(label).horizontal_alignment(alignment::Horizontal::Center);
 
         let style = if self.solve_time.penalty == penalty {
-            theme::Button::Primary
+            // tangible::theme::Button::Default
+            self.theme().palette().view.into()
         } else {
-            theme::Button::Text
+            tangible::theme::Button::Flat
         };
 
         widget::button(label)
             .style(style)
-            .padding(8)
+            .padding(4)
             .on_press(Message::PenaltySelected(penalty))
+            .width(Length::FillPortion(1))
             .into()
     }
 
-    fn penalty_selector(&self) -> iced::Element<'_, Message, iced::Renderer<iced::Theme>> {
-        widget::row![
+    fn penalty_selector(&self) -> iced::Element<'_, Message, iced::Renderer<tangible::Theme>> {
+        let row = widget::row![
             self.penalty_button("OK", None),
             self.penalty_button("+2", Some(data::Penalty::Plus2)),
             self.penalty_button("DNF", Some(data::Penalty::Dnf)),
         ]
-        .spacing(6)
+        .spacing(4)
         .align_items(Alignment::Center)
-        .into()
+        .width(Length::Fixed(200.0));
+
+        widget::container(row)
+            .style(tangible::theme::Container::Solid(
+                tangible::theme::NamedColor::Neutral,
+            ))
+            .padding(4)
+            .into()
     }
 
-    fn sidebar(&self) -> iced::Element<'_, Message, iced::Renderer<iced::Theme>> {
+    fn sidebar(&self) -> iced::Element<'_, Message, iced::Renderer<tangible::Theme>> {
         let times_column = widget::Column::with_children(
             self.session
                 .iter()
@@ -337,13 +365,13 @@ impl KubiaTimer {
                             .horizontal_alignment(alignment::Horizontal::Center)
                             .width(Length::FillPortion(1)),
                     ]
-                    .spacing(8)
+                    .spacing(4)
                     .into()
                 })
                 .collect(),
         )
-        .spacing(8)
-        .padding(12)
+        .spacing(4)
+        .padding(8)
         .align_items(Alignment::Start)
         .width(Length::Fixed(300.0));
 
@@ -352,7 +380,7 @@ impl KubiaTimer {
             .into()
     }
 
-    fn bottombar(&self) -> iced::Element<'_, Message, iced::Renderer<iced::Theme>> {
+    fn bottombar(&self) -> iced::Element<'_, Message, iced::Renderer<tangible::Theme>> {
         let times_row = widget::Row::with_children(
             self.session
                 .iter()
@@ -360,8 +388,8 @@ impl KubiaTimer {
                 .map(|se| widget::text(se.1.solve.time).into())
                 .collect(),
         )
-        .spacing(8)
-        .padding(12)
+        .spacing(4)
+        .padding(8)
         .align_items(Alignment::Start);
 
         widget::scrollable(times_row)

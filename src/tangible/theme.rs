@@ -1,6 +1,6 @@
 use std::borrow::Borrow;
 
-pub use self::palette::{NamedColor, Palette};
+pub use self::palette::{ColorGroup, NamedColor, Palette};
 
 use iced::{overlay, widget, Background, Color, Vector};
 
@@ -50,7 +50,7 @@ impl iced::application::StyleSheet for Theme {
 
         match style {
             Application::Default => iced::application::Appearance {
-                background_color: palette.window.bg,
+                background_color: palette.window.bg.base,
                 text_color: palette.window.fg,
             },
             Application::Custom(custom) => custom.appearance(self),
@@ -66,7 +66,14 @@ pub enum Button {
     Suggested,
     Destructive,
     Flat,
+    ColorGroup(ColorGroup),
     // Text,
+}
+
+impl From<ColorGroup> for Button {
+    fn from(value: ColorGroup) -> Self {
+        Self::ColorGroup(value)
+    }
 }
 
 impl widget::button::StyleSheet for Theme {
@@ -80,11 +87,12 @@ impl widget::button::StyleSheet for Theme {
             Button::Suggested => palette.accent,
             Button::Destructive => palette.destructive,
             Button::Flat => palette.flat,
+            Button::ColorGroup(cg) => *cg,
         };
 
         widget::button::Appearance {
             shadow_offset: Vector::default(),
-            background: Some(cg.bg.into()),
+            background: Some(cg.bg.base.into()),
             border_radius: 6.0,
             border_width: 0.0,
             border_color: Color::TRANSPARENT,
@@ -100,17 +108,28 @@ impl widget::button::StyleSheet for Theme {
             Button::Suggested => palette.accent,
             Button::Destructive => palette.destructive,
             Button::Flat => palette.flat,
+            Button::ColorGroup(cg) => *cg,
         };
 
         widget::button::Appearance {
-            background: Some(cg.bg_hover.into()),
+            background: Some(cg.bg.hover.into()),
             ..self.active(style)
         }
     }
 
     fn pressed(&self, style: &Self::Style) -> widget::button::Appearance {
+        let palette = self.palette();
+
+        let cg = match style {
+            Button::Default => palette.neutral,
+            Button::Suggested => palette.accent,
+            Button::Destructive => palette.destructive,
+            Button::Flat => palette.flat,
+            Button::ColorGroup(cg) => *cg,
+        };
+
         widget::button::Appearance {
-            shadow_offset: iced::Vector::default(),
+            background: Some(cg.bg.strong.into()),
             ..self.active(style)
         }
     }
@@ -156,16 +175,16 @@ impl widget::checkbox::StyleSheet for Theme {
                 Checkbox::Destructive => palette.destructive,
             }
         } else {
-            palette.neutral 
+            palette.neutral
         };
 
         widget::checkbox::Appearance {
-            background: cg.bg.into(),
+            background: cg.bg.base.into(),
             icon_color: cg.fg,
             border_radius: 6.0,
             text_color: None,
             border_width: 1.0,
-            border_color: cg.bg,
+            border_color: cg.bg.strong,
         }
     }
 
@@ -179,16 +198,16 @@ impl widget::checkbox::StyleSheet for Theme {
                 Checkbox::Destructive => palette.destructive,
             }
         } else {
-            palette.neutral 
+            palette.neutral
         };
 
         widget::checkbox::Appearance {
-            background: cg.bg_hover.into(),
+            background: cg.bg.hover.into(),
             icon_color: cg.fg,
             border_radius: 6.0,
             text_color: None,
             border_width: 1.0,
-            border_color: cg.bg_hover,
+            border_color: cg.bg.strong,
         }
     }
 }
@@ -219,7 +238,7 @@ impl widget::container::StyleSheet for Theme {
                 let cg = palette.group(*name);
                 widget::container::Appearance {
                     text_color: Some(cg.fg),
-                    background: Some(cg.bg.into()),
+                    background: Some(cg.bg.base.into()),
                     border_radius: 6.0,
                     ..Default::default()
                 }
@@ -372,7 +391,7 @@ impl widget::rule::StyleSheet for Theme {
         let palette = self.palette();
 
         widget::rule::Appearance {
-            color: palette.view.bg,
+            color: palette.view.bg.strong,
             width: 1,
             radius: 0.0,
             fill_mode: widget::rule::FillMode::Full,
@@ -399,12 +418,12 @@ impl widget::scrollable::StyleSheet for Theme {
         let palette = self.palette();
 
         widget::scrollable::Scrollbar {
-            background: palette.window.bg.into(),
+            background: palette.window.bg.base.into(),
             border_radius: 6.0,
             border_width: 0.0,
             border_color: Color::TRANSPARENT,
             scroller: widget::scrollable::Scroller {
-                color: palette.neutral.bg,
+                color: palette.neutral.bg.base,
                 border_color: Color::TRANSPARENT,
                 border_width: 0.0,
                 border_radius: 2.0,
@@ -421,12 +440,12 @@ impl widget::scrollable::StyleSheet for Theme {
             let palette = self.palette();
 
             widget::scrollable::Scrollbar {
-                background: palette.window.bg.into(),
+                background: palette.window.bg.base.into(),
                 border_radius: 6.0,
                 border_width: 0.0,
                 border_color: Color::TRANSPARENT,
                 scroller: widget::scrollable::Scroller {
-                    color: palette.neutral.bg_hover,
+                    color: palette.neutral.bg.hover,
                     border_color: Color::TRANSPARENT,
                     border_width: 0.0,
                     border_radius: 2.0,
@@ -463,6 +482,12 @@ pub enum Text {
     #[default]
     Default,
     Color(Color),
+}
+
+impl From<Color> for Text {
+    fn from(value: Color) -> Self {
+        Self::Color(value)
+    }
 }
 
 impl widget::text::StyleSheet for Theme {
