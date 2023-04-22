@@ -1,12 +1,12 @@
 use iced::{
     alignment,
     keyboard::{self, KeyCode},
-    subscription, theme, time, widget, Alignment, Application, Color, Command, Event, Length,
+    subscription, time, widget, Alignment, Application, Command, Event, Length,
     Subscription,
 };
 use std::time::{Duration, Instant, SystemTime};
 
-use crate::data::{self, Session, Solve, SolveTime};
+use crate::data;
 
 use crate::tangible;
 
@@ -15,7 +15,7 @@ pub struct KubiaTimer {
     link_to_last_solve: bool,
     last_pressed: Instant,
     state: State,
-    session: Session,
+    session: data::Session,
 }
 
 pub enum State {
@@ -39,13 +39,20 @@ pub enum ButtonType {
 pub enum Message {
     TriggerPress,
     TriggerRelease,
+    TriggerTimeout,
     Tick(Instant),
 
     PenaltySelected(Option<data::Penalty>),
     ButtonPressed(ButtonType),
 
+    SolveSelected { index: usize },
+
     Todo,
 }
+
+// pub enum SolveEditMessage {
+//     SolveTimeChanged
+// }
 
 impl iced::Application for KubiaTimer {
     type Executor = iced::executor::Default;
@@ -63,7 +70,7 @@ impl iced::Application for KubiaTimer {
                 link_to_last_solve: false,
                 last_pressed: Instant::now(),
                 state: State::Idle { pressed: false },
-                session: Session::new(),
+                session: data::Session::new(),
             },
             iced::Command::none(),
         )
@@ -73,12 +80,79 @@ impl iced::Application for KubiaTimer {
         String::from("Kubia Timer")
     }
 
+    fn theme(&self) -> Self::Theme {
+        tangible::Theme::Tangible
+    }
+
     fn update(&mut self, message: Self::Message) -> iced::Command<Self::Message> {
         const PRESS_START_INTERVAL: Duration = Duration::from_millis(500);
 
-        match message {
+        let command = match message {
             Message::TriggerPress => {
                 self.last_pressed = Instant::now();
+                match &mut self.state {
+                    State::Idle { pressed } => {
+                        let start_press = !*pressed;
+                        *pressed = true;
+                        if start_press {
+                            Command::perform(async_std::task::sleep(PRESS_START_INTERVAL), |()| {
+                                Message::TriggerTimeout
+                            })
+                        } else {
+                            Command::none()
+                        }
+                    }
+                    State::Timing { last_tick: _ } => {
+                        self.session.add_solve(data::Solve {
+                            time: self.solve_time,
+                            timestamp: SystemTime::now(),
+                            scramble: "".to_string(),
+                        });
+                        self.link_to_last_solve = true;
+                        self.state = State::Finished;
+                        Command::none()
+                    }
+                    _ => Command::none(),
+                }
+            }
+            Message::TriggerRelease => {
+                match &mut self.state {
+                    State::Idle { pressed } => {
+                        *pressed = false;
+                    }
+                    State::Ready => {
+                        self.state = State::Timing {
+                            last_tick: Instant::now(),
+                        };
+                    }
+                    State::Finished => {
+                        self.state = State::Idle { pressed: false };
+                    }
+                    _ => {}
+                }
+                Command::none()
+            }
+            Message::TriggerTimeout => {
+                match &mut self.state {
+                    State::Idle { pressed } => {
+                        if *pressed && Instant::now() - self.last_pressed > PRESS_START_INTERVAL {
+                            self.solve_time = data::SolveTime::default();
+                            self.state = State::Ready;
+                        }
+                    }
+                    _ => {}
+                }
+                Command::none()
+            }
+            Message::Tick(now) => {
+                match &mut self.state {
+                    State::Timing { last_tick } => {
+                        self.solve_time.time += now - *last_tick;
+                        *last_tick = now;
+                    }
+                    _ => {}
+                }
+                Command::none()
             }
             Message::PenaltySelected(penalty) => {
                 self.solve_time.penalty = penalty;
@@ -88,61 +162,12 @@ impl iced::Application for KubiaTimer {
                         self.session.update_statistics_last();
                     }
                 }
+                Command::none()
             }
-            _ => {}
-        }
+            _ => Command::none(),
+        };
 
-        match &mut self.state {
-            State::Idle { pressed } => match message {
-                Message::TriggerPress => {
-                    *pressed = true;
-                }
-                Message::TriggerRelease => {
-                    *pressed = false;
-                }
-                Message::Tick(now) => {
-                    if *pressed && now - self.last_pressed > PRESS_START_INTERVAL {
-                        self.state = State::Ready;
-                        // self.duration = Duration::new(0, 0);
-                        self.solve_time = data::SolveTime::default();
-                    }
-                }
-                _ => {}
-            },
-
-            State::Ready => match message {
-                Message::TriggerRelease => {
-                    self.state = State::Timing {
-                        last_tick: Instant::now(),
-                    };
-                }
-                _ => {}
-            },
-
-            State::Timing { last_tick } => match message {
-                Message::TriggerPress => {
-                    log::info!("Solve: {}", SolveTime::new(self.solve_time.time, None));
-                    self.session.add_solve(Solve {
-                        time: self.solve_time,
-                        timestamp: SystemTime::now(),
-                        scramble: "".to_string(),
-                    });
-                    self.link_to_last_solve = true;
-                    self.state = State::Finished;
-                }
-                Message::Tick(now) => {
-                    self.solve_time.time += now - *last_tick;
-                    *last_tick = now;
-                }
-                _ => {}
-            },
-
-            State::Finished => match message {
-                Message::TriggerRelease => self.state = State::Idle { pressed: false },
-                _ => {}
-            },
-        }
-        Command::none()
+        command
     }
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
@@ -165,10 +190,13 @@ impl iced::Application for KubiaTimer {
             }
         });
 
-        Subscription::batch([
-            kbs,
-            time::every(Duration::from_millis(10)).map(Message::Tick),
-        ])
+        match self.state {
+            State::Timing { last_tick: _ } => Subscription::batch([
+                kbs,
+                time::every(Duration::from_millis(10)).map(Message::Tick),
+            ]),
+            _ => kbs,
+        }
     }
 
     fn view(&self) -> iced::Element<'_, Self::Message, iced::Renderer<Self::Theme>> {
@@ -263,12 +291,11 @@ impl KubiaTimer {
                                 widget::text("Ao5")
                                     .width(Length::FillPortion(1))
                                     .horizontal_alignment(alignment::Horizontal::Right),
-                                widget::text(format!(
-                                    "{}",
+                                widget::text(
                                     self.session
                                         .last_ao5()
                                         .map_or("--".to_string(), |s| s.to_string()),
-                                ))
+                                )
                                 .width(Length::FillPortion(1))
                                 .horizontal_alignment(alignment::Horizontal::Left),
                             ]
@@ -278,12 +305,11 @@ impl KubiaTimer {
                                 widget::text("Ao12")
                                     .width(Length::FillPortion(1))
                                     .horizontal_alignment(alignment::Horizontal::Right),
-                                widget::text(format!(
-                                    "{}",
+                                widget::text(
                                     self.session
                                         .last_ao12()
                                         .map_or("--".to_string(), |s| s.to_string()),
-                                ))
+                                )
                                 .width(Length::FillPortion(1))
                                 .horizontal_alignment(alignment::Horizontal::Left),
                             ]
@@ -315,7 +341,6 @@ impl KubiaTimer {
         let label = widget::text(label).horizontal_alignment(alignment::Horizontal::Center);
 
         let style = if self.solve_time.penalty == penalty {
-            // tangible::theme::Button::Default
             self.theme().palette().view.into()
         } else {
             tangible::theme::Button::Flat
@@ -348,36 +373,57 @@ impl KubiaTimer {
     }
 
     fn sidebar(&self) -> iced::Element<'_, Message, iced::Renderer<tangible::Theme>> {
-        let times_column = widget::Column::with_children(
-            self.session
-                .iter()
-                .enumerate()
-                .rev()
-                .map(|se| {
-                    widget::row![
-                        widget::text(se.1.solve.time)
-                            .horizontal_alignment(alignment::Horizontal::Center)
-                            .width(Length::FillPortion(1)),
-                        widget::text(se.1.ao5.map_or("--".to_string(), |ao5| ao5.to_string()))
-                            .horizontal_alignment(alignment::Horizontal::Center)
-                            .width(Length::FillPortion(1)),
-                        widget::text(se.1.ao12.map_or("--".to_string(), |ao12| ao12.to_string()))
-                            .horizontal_alignment(alignment::Horizontal::Center)
-                            .width(Length::FillPortion(1)),
-                    ]
-                    .spacing(4)
-                    .into()
-                })
-                .collect(),
-        )
-        .spacing(4)
-        .padding(8)
-        .align_items(Alignment::Start)
-        .width(Length::Fixed(300.0));
+        if self.session.get_n_solves() > 0 {
+            let times_column = widget::Column::with_children(
+                self.session
+                    .iter()
+                    .enumerate()
+                    .rev()
+                    .map(|(i, se)| {
+                        let row = widget::row![
+                            widget::text(se.solve.time)
+                                .horizontal_alignment(alignment::Horizontal::Center)
+                                .width(Length::FillPortion(1)),
+                            widget::text(se.ao5.map_or("--".to_string(), |ao5| ao5.to_string()))
+                                .horizontal_alignment(alignment::Horizontal::Center)
+                                .width(Length::FillPortion(1)),
+                            widget::text(se.ao12.map_or("--".to_string(), |ao12| ao12.to_string()))
+                                .horizontal_alignment(alignment::Horizontal::Center)
+                                .width(Length::FillPortion(1)),
+                        ]
+                        .spacing(4);
 
-        widget::scrollable(times_column)
-            .vertical_scroll(widget::scrollable::Properties::default())
-            .into()
+                        widget::button(row)
+                            .padding([4, 8])
+                            .style(tangible::theme::Button::Flat)
+                            .on_press(Message::SolveSelected { index: i })
+                            .into()
+                    })
+                    .collect(),
+            )
+            .spacing(4)
+            .padding(8)
+            .align_items(Alignment::Start)
+            .width(Length::Fixed(300.0));
+
+            widget::scrollable(times_column)
+                .vertical_scroll(widget::scrollable::Properties::default())
+                .into()
+        } else {
+            let content = widget::column![
+                widget::text("No Solves").size(32.0),
+                widget::text("Add solve by starting the timer."),
+            ]
+            .spacing(8)
+            .align_items(Alignment::Center);
+
+            widget::container(content)
+                .width(Length::Fixed(300.0))
+                .height(Length::Fill)
+                .center_x()
+                .center_y()
+                .into()
+        }
     }
 
     fn bottombar(&self) -> iced::Element<'_, Message, iced::Renderer<tangible::Theme>> {
@@ -385,11 +431,17 @@ impl KubiaTimer {
             self.session
                 .iter()
                 .enumerate()
-                .map(|se| widget::text(se.1.solve.time).into())
+                .map(|(i, se)| {
+                    widget::button(widget::text(se.solve.time))
+                        .padding([4, 8])
+                        .style(tangible::theme::Button::Flat)
+                        .on_press(Message::SolveSelected { index: i })
+                        .into()
+                })
                 .collect(),
         )
         .spacing(4)
-        .padding(8)
+        .padding(4)
         .align_items(Alignment::Start);
 
         widget::scrollable(times_row)

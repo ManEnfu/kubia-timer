@@ -16,7 +16,11 @@ pub enum Theme {
 
 impl Theme {
     pub fn palette(&self) -> &Palette {
-        &palette::LIGHT
+        match self {
+            Self::Light => &palette::LIGHT,
+            Self::Dark => &palette::DARK,
+            Self::Tangible => &palette::TANGIBLE,
+        }
     }
 }
 
@@ -50,8 +54,8 @@ impl iced::application::StyleSheet for Theme {
 
         match style {
             Application::Default => iced::application::Appearance {
-                background_color: palette.window.bg.base,
-                text_color: palette.window.fg,
+                background_color: palette.view.bg.base,
+                text_color: palette.view.fg,
             },
             Application::Custom(custom) => custom.appearance(self),
         }
@@ -391,7 +395,7 @@ impl widget::rule::StyleSheet for Theme {
         let palette = self.palette();
 
         widget::rule::Appearance {
-            color: palette.view.bg.strong,
+            color: palette.card.bg.strong,
             width: 1,
             radius: 0.0,
             fill_mode: widget::rule::FillMode::Full,
@@ -418,7 +422,7 @@ impl widget::scrollable::StyleSheet for Theme {
         let palette = self.palette();
 
         widget::scrollable::Scrollbar {
-            background: palette.window.bg.base.into(),
+            background: palette.view.bg.base.into(),
             border_radius: 6.0,
             border_width: 0.0,
             border_color: Color::TRANSPARENT,
@@ -440,7 +444,7 @@ impl widget::scrollable::StyleSheet for Theme {
             let palette = self.palette();
 
             widget::scrollable::Scrollbar {
-                background: palette.window.bg.base.into(),
+                background: palette.view.bg.base.into(),
                 border_radius: 6.0,
                 border_width: 0.0,
                 border_color: Color::TRANSPARENT,
