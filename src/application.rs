@@ -171,7 +171,6 @@ impl iced::Application for KubiaTimer {
     }
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
-        // Subscription::none()
         let kbs = subscription::events_with(|e, _s| {
             if let Event::Keyboard(ke) = e {
                 match ke {
@@ -341,9 +340,10 @@ impl KubiaTimer {
         let label = widget::text(label).horizontal_alignment(alignment::Horizontal::Center);
 
         let style = if self.solve_time.penalty == penalty {
-            self.theme().palette().view.into()
+            self.theme().palette().selector_active.into()
         } else {
-            tangible::theme::Button::Flat
+            // tangible::theme::Button::Flat
+            self.theme().palette().selector.into()
         };
 
         widget::button(label)
@@ -365,9 +365,11 @@ impl KubiaTimer {
         .width(Length::Fixed(200.0));
 
         widget::container(row)
-            .style(tangible::theme::Container::Solid(
-                tangible::theme::NamedColor::Neutral,
-            ))
+            // .style(tangible::theme::Container::Solid(
+            //     // tangible::theme::NamedColor::Neutral,
+            //     self.theme().palette().selector.into()
+            // ))
+            .style(self.theme().palette().selector)
             .padding(4)
             .into()
     }
@@ -407,12 +409,15 @@ impl KubiaTimer {
             .width(Length::Fixed(300.0));
 
             widget::scrollable(times_column)
-                .vertical_scroll(widget::scrollable::Properties::default())
+                .vertical_scroll(widget::scrollable::Properties::new()
+                    .width(4.0)
+                    .margin(4.0)
+                    .scroller_width(4.0))
                 .into()
         } else {
             let content = widget::column![
                 widget::text("No Solves").size(32.0),
-                widget::text("Add solve by starting the timer."),
+                widget::text("Add solve by starting the timer.").style(tangible::theme::Text::Dim),
             ]
             .spacing(8)
             .align_items(Alignment::Center);
@@ -445,7 +450,10 @@ impl KubiaTimer {
         .align_items(Alignment::Start);
 
         widget::scrollable(times_row)
-            .horizontal_scroll(widget::scrollable::Properties::default())
+            .horizontal_scroll(widget::scrollable::Properties::new()
+                .width(4.0)
+                .margin(4.0)
+                .scroller_width(4.0))
             .into()
     }
 }

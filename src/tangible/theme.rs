@@ -1,8 +1,6 @@
-use std::borrow::Borrow;
+pub use self::palette::{ColorGroup, NamedColor, Palette, PALETTE_LIGHT, PALETTE_DARK, PALETTE_TANGIBLE};
 
-pub use self::palette::{ColorGroup, NamedColor, Palette};
-
-use iced::{overlay, widget, Background, Color, Vector};
+use iced::{overlay, widget, Color, Vector};
 
 mod palette;
 
@@ -17,9 +15,9 @@ pub enum Theme {
 impl Theme {
     pub fn palette(&self) -> &Palette {
         match self {
-            Self::Light => &palette::LIGHT,
-            Self::Dark => &palette::DARK,
-            Self::Tangible => &palette::TANGIBLE,
+            Self::Light => &palette::PALETTE_LIGHT,
+            Self::Dark => &palette::PALETTE_DARK,
+            Self::Tangible => &palette::PALETTE_TANGIBLE,
         }
     }
 }
@@ -222,11 +220,18 @@ pub enum Container {
     #[default]
     Transparent,
     Solid(NamedColor),
+    ColorGroup(ColorGroup),
 }
 
 impl From<NamedColor> for Container {
     fn from(value: NamedColor) -> Self {
         Self::Solid(value)
+    }
+}
+
+impl From<ColorGroup> for Container {
+    fn from(value: ColorGroup) -> Self {
+        Self::ColorGroup(value)
     }
 }
 
@@ -238,6 +243,14 @@ impl widget::container::StyleSheet for Theme {
 
         match style {
             Container::Transparent => Default::default(),
+            Container::ColorGroup(cg) => {
+                widget::container::Appearance {
+                    text_color: Some(cg.fg),
+                    background: Some(cg.bg.base.into()),
+                    border_radius: 6.0,
+                    ..Default::default()
+                }
+            }
             Container::Solid(name) => {
                 let cg = palette.group(*name);
                 widget::container::Appearance {
@@ -395,7 +408,7 @@ impl widget::rule::StyleSheet for Theme {
         let palette = self.palette();
 
         widget::rule::Appearance {
-            color: palette.card.bg.strong,
+            color: palette.view.bg.strong,
             width: 1,
             radius: 0.0,
             fill_mode: widget::rule::FillMode::Full,
@@ -422,7 +435,7 @@ impl widget::scrollable::StyleSheet for Theme {
         let palette = self.palette();
 
         widget::scrollable::Scrollbar {
-            background: palette.view.bg.base.into(),
+            background: None,
             border_radius: 6.0,
             border_width: 0.0,
             border_color: Color::TRANSPARENT,
@@ -444,7 +457,7 @@ impl widget::scrollable::StyleSheet for Theme {
             let palette = self.palette();
 
             widget::scrollable::Scrollbar {
-                background: palette.view.bg.base.into(),
+                background: None,
                 border_radius: 6.0,
                 border_width: 0.0,
                 border_color: Color::TRANSPARENT,
@@ -485,6 +498,7 @@ impl widget::scrollable::StyleSheet for Theme {
 pub enum Text {
     #[default]
     Default,
+    Dim,
     Color(Color),
 }
 
@@ -500,6 +514,11 @@ impl widget::text::StyleSheet for Theme {
     fn appearance(&self, style: Self::Style) -> widget::text::Appearance {
         match style {
             Text::Default => Default::default(),
+            Text::Dim => {
+                let mut color = self.palette().view.fg;
+                color.a = color.a * 0.5;
+                widget::text::Appearance{ color: Some(color) }
+            }
             Text::Color(c) => widget::text::Appearance { color: Some(c) },
         }
     }

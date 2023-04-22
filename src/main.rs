@@ -13,6 +13,7 @@ fn main() -> iced::Result {
     env_logger::init();
 
     KubiaTimer::run(iced::Settings {
+        id: Some("com.github.manenfu.KubiaTimer".to_string()),
         default_text_size: 18.0,
         window: window::Settings {
             size: (800, 600),

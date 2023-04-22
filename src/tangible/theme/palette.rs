@@ -101,6 +101,9 @@ pub struct Palette {
     pub view: ColorGroup,
     pub card: ColorGroup,
     pub header: ColorGroup,
+
+    pub selector: ColorGroup,
+    pub selector_active: ColorGroup,
 }
 
 impl Palette {
@@ -136,7 +139,7 @@ fn lighten(color: Color, amount: f32) -> Color {
     Srgb::from_color(hsl).into()
 }
 
-pub static LIGHT: Lazy<Palette> = Lazy::new(|| Palette {
+pub static PALETTE_LIGHT: Lazy<Palette> = Lazy::new(|| Palette {
     neutral: ColorGroup {
         base: color!(0x000000, 0.3),
         bg: BackgroundColor {
@@ -205,9 +208,23 @@ pub static LIGHT: Lazy<Palette> = Lazy::new(|| Palette {
         bg: BackgroundColor::new(color!(0xffffff)).darken_strong(0.15),
         fg: color!(0x202020),
     },
+    selector: ColorGroup {
+        base: color!(0x000000, 0.3),
+        bg: BackgroundColor {
+            base: color!(0x000000, 0.3),
+            hover: color!(0x000000, 0.45),
+            strong: color!(0x000000, 0.60),
+        },
+        fg: color!(0x202020),
+    },
+    selector_active: ColorGroup {
+        base: color!(0xfafafa),
+        bg: BackgroundColor::new(color!(0xfafafa)).darken_strong(0.15),
+        fg: color!(0x202020),
+    },
 });
 
-pub static DARK: Lazy<Palette> = Lazy::new(|| Palette {
+pub static PALETTE_DARK: Lazy<Palette> = Lazy::new(|| Palette {
     neutral: ColorGroup {
         base: color!(0xffffff, 0.05),
         bg: BackgroundColor {
@@ -276,9 +293,23 @@ pub static DARK: Lazy<Palette> = Lazy::new(|| Palette {
         bg: BackgroundColor::new(color!(0x303030)).lighten_strong(0.05),
         fg: color!(0xffffff),
     },
+    selector: ColorGroup {
+        base: color!(0xffffff, 0.05),
+        bg: BackgroundColor {
+            base: color!(0xffffff, 0.02),
+            hover: color!(0xffffff, 0.04),
+            strong: color!(0xffffff, 0.06),
+        },
+        fg: color!(0xffffff),
+    },
+    selector_active: ColorGroup {
+        base: color!(0x242424),
+        bg: BackgroundColor::new(color!(0x242424)).lighten_strong(0.05),
+        fg: color!(0xffffff),
+    },
 });
 
-pub static TANGIBLE: Lazy<Palette> = Lazy::new(|| Palette {
+pub static PALETTE_TANGIBLE: Lazy<Palette> = Lazy::new(|| Palette {
     neutral: ColorGroup {
         base: color!(0xffffff, 0.05),
         bg: BackgroundColor {
@@ -334,7 +365,11 @@ pub static TANGIBLE: Lazy<Palette> = Lazy::new(|| Palette {
     },
     view: ColorGroup {
         base: color!(0x101010),
-        bg: BackgroundColor::new(color!(0x101010)).lighten_strong(0.05),
+        bg: BackgroundColor { 
+            base: color!(0x101010), 
+            hover: color!(0x202020), 
+            strong: color!(0x080808),
+        },
         fg: color!(0xffffff),
     },
     card: ColorGroup {
@@ -345,6 +380,24 @@ pub static TANGIBLE: Lazy<Palette> = Lazy::new(|| Palette {
     header: ColorGroup {
         base: color!(0x202020),
         bg: BackgroundColor::new(color!(0x202020)).lighten_strong(0.05),
+        fg: color!(0xffffff),
+    },
+    selector: ColorGroup {
+        base: color!(0x202020),
+        bg: BackgroundColor {
+            base: color!(0x202020),
+            hover: color!(0x303030),
+            strong: color!(0x424242),
+        },
+        fg: color!(0xffffff),
+    },
+    selector_active: ColorGroup {
+        base: color!(0x04323f),
+        bg: BackgroundColor { 
+            base: color!(0x15424f), 
+            hover: color!(0x245462),
+            strong: color!(0x245462),
+        },
         fg: color!(0xffffff),
     },
 });
