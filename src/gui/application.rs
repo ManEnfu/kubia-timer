@@ -1,8 +1,7 @@
 use iced::{
     alignment,
     keyboard::{self, KeyCode},
-    subscription, time, widget, Alignment, Application, Command, Event, Length,
-    Subscription,
+    subscription, time, widget, Alignment, Application, Command, Event, Length, Subscription,
 };
 use std::time::{Duration, Instant, SystemTime};
 
@@ -10,7 +9,13 @@ use crate::data;
 
 use crate::tangible;
 
-pub struct KubiaTimer {
+pub use preferences::Preferences;
+
+mod preferences;
+
+pub struct KTApplication {
+    preferences: Preferences,
+
     solve_time: data::SolveTime,
     link_to_last_solve: bool,
     last_pressed: Instant,
@@ -46,6 +51,7 @@ pub enum Message {
     ButtonPressed(ButtonType),
 
     SolveSelected { index: usize },
+    ThemeSelected(tangible::Theme),
 
     Todo,
 }
@@ -54,7 +60,7 @@ pub enum Message {
 //     SolveTimeChanged
 // }
 
-impl iced::Application for KubiaTimer {
+impl iced::Application for KTApplication {
     type Executor = iced::executor::Default;
 
     type Message = Message;
@@ -66,6 +72,8 @@ impl iced::Application for KubiaTimer {
     fn new(_flags: Self::Flags) -> (Self, iced::Command<Self::Message>) {
         (
             Self {
+                preferences: Preferences::new(),
+
                 solve_time: data::SolveTime::default(),
                 link_to_last_solve: false,
                 last_pressed: Instant::now(),
@@ -81,7 +89,7 @@ impl iced::Application for KubiaTimer {
     }
 
     fn theme(&self) -> Self::Theme {
-        tangible::Theme::Tangible
+        self.preferences.theme
     }
 
     fn update(&mut self, message: Self::Message) -> iced::Command<Self::Message> {
@@ -164,6 +172,10 @@ impl iced::Application for KubiaTimer {
                 }
                 Command::none()
             }
+            Message::ThemeSelected(theme) => {
+                self.preferences.theme = theme;
+                Command::none()
+            }
             _ => Command::none(),
         };
 
@@ -202,7 +214,7 @@ impl iced::Application for KubiaTimer {
         iced_lazy::responsive(move |size| {
             let compact = size.width <= 600.0;
 
-            if compact {
+            let content = if compact {
                 let mut column = widget::Column::new();
                 column = column.push(self.center_timer());
                 if !matches!(self.state, State::Ready | State::Timing { .. }) {
@@ -211,7 +223,7 @@ impl iced::Application for KubiaTimer {
                         .push(self.bottombar());
                 }
 
-                column.into()
+                iced::Element::from(column)
             } else {
                 let mut row = widget::Row::new();
                 if !matches!(self.state, State::Ready | State::Timing { .. }) {
@@ -219,14 +231,44 @@ impl iced::Application for KubiaTimer {
                 }
                 row = row.push(self.center_timer());
 
-                row.into()
-            }
+                iced::Element::from(row)
+            };
+
+            // let mut winbox = widget::Column::new();
+            // if !matches!(self.state, State::Ready | State::Timing { .. }) {
+            // }
+            // winbox = winbox.push(content);
+            // winbox.into()
+            widget::column![
+                self.headerbar(),
+                content,
+            ]
+            .into()
         })
         .into()
     }
 }
 
-impl KubiaTimer {
+impl KTApplication {
+    fn headerbar(&self) -> iced::Element<'_, Message, iced::Renderer<tangible::Theme>> {
+        widget::column![
+            widget::row![
+                widget::pick_list(
+                    &tangible::Theme::ALL[..],
+                    Some(self.preferences.theme),
+                    Message::ThemeSelected,
+                )
+                .padding([4, 8])
+                .width(Length::Shrink)
+                .placeholder("--"),
+            ]
+            .spacing(4)
+            .padding(4),
+            widget::horizontal_rule(1),
+        ]
+        .into()
+    }
+
     fn center_timer(&self) -> iced::Element<'_, Message, iced::Renderer<tangible::Theme>> {
         iced_lazy::responsive(move |size| {
             let compact = size.width <= 450.0;
@@ -319,6 +361,16 @@ impl KubiaTimer {
                     )
                 }
 
+                // center_content.push(
+                //     widget::pick_list(
+                //         &tangible::Theme::ALL[..],
+                //         Some(self.preferences.theme),
+                //         Message::ThemeSelected,
+                //     )
+                //     .padding([4, 8])
+                //     .width(Length::Shrink)
+                //     .placeholder("--"),
+                // )
                 center_content
             };
 
@@ -409,10 +461,12 @@ impl KubiaTimer {
             .width(Length::Fixed(300.0));
 
             widget::scrollable(times_column)
-                .vertical_scroll(widget::scrollable::Properties::new()
-                    .width(4.0)
-                    .margin(4.0)
-                    .scroller_width(4.0))
+                .vertical_scroll(
+                    widget::scrollable::Properties::new()
+                        .width(4.0)
+                        .margin(4.0)
+                        .scroller_width(4.0),
+                )
                 .into()
         } else {
             let content = widget::column![
@@ -450,10 +504,12 @@ impl KubiaTimer {
         .align_items(Alignment::Start);
 
         widget::scrollable(times_row)
-            .horizontal_scroll(widget::scrollable::Properties::new()
-                .width(4.0)
-                .margin(4.0)
-                .scroller_width(4.0))
+            .horizontal_scroll(
+                widget::scrollable::Properties::new()
+                    .width(4.0)
+                    .margin(4.0)
+                    .scroller_width(4.0),
+            )
             .into()
     }
 }

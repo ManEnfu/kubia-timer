@@ -52,6 +52,7 @@ pub struct ColorGroup {
     pub base: Color,
     pub bg: BackgroundColor,
     pub fg: Color,
+    pub border: Color,
     // pub base_hover: Color,
     // pub bg_hover: Color,
 }
@@ -148,6 +149,7 @@ pub static PALETTE_LIGHT: Lazy<Palette> = Lazy::new(|| Palette {
             strong: color!(0x000000, 0.60),
         },
         fg: color!(0x202020),
+        border: color!(0x202020, 0.2),
     },
     accent: ColorGroup {
         base: color!(0x1c71d8),
@@ -155,6 +157,7 @@ pub static PALETTE_LIGHT: Lazy<Palette> = Lazy::new(|| Palette {
             .lighten_hover(0.1)
             .darken_strong(0.1),
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     destructive: ColorGroup {
         base: color!(0xc01c28),
@@ -162,6 +165,7 @@ pub static PALETTE_LIGHT: Lazy<Palette> = Lazy::new(|| Palette {
             .lighten_hover(0.1)
             .darken_strong(0.1),
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     success: ColorGroup {
         base: color!(0x1b8553),
@@ -169,6 +173,7 @@ pub static PALETTE_LIGHT: Lazy<Palette> = Lazy::new(|| Palette {
             .lighten_hover(0.1)
             .darken_strong(0.1),
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     warning: ColorGroup {
         base: color!(0x9c6e03),
@@ -176,6 +181,7 @@ pub static PALETTE_LIGHT: Lazy<Palette> = Lazy::new(|| Palette {
             .darken_hover(0.1)
             .darken_strong(0.2),
         fg: color!(0x202020),
+        border: color!(0x202020, 0.2),
     },
     error: ColorGroup {
         base: color!(0xc01c28),
@@ -183,6 +189,7 @@ pub static PALETTE_LIGHT: Lazy<Palette> = Lazy::new(|| Palette {
             .lighten_hover(0.1)
             .darken_strong(0.1),
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     flat: ColorGroup {
         base: color!(0x000000, 0.0),
@@ -192,21 +199,27 @@ pub static PALETTE_LIGHT: Lazy<Palette> = Lazy::new(|| Palette {
             strong: color!(0x000000, 0.4),
         },
         fg: color!(0x202020),
+        border: color!(0x202020, 0.2),
     },
     view: ColorGroup {
         base: color!(0xfafafa),
         bg: BackgroundColor::new(color!(0xfafafa)).darken_strong(0.15),
         fg: color!(0x202020),
+        border: color!(0x202020, 0.2),
     },
     card: ColorGroup {
         base: color!(0xffffff),
-        bg: BackgroundColor::new(color!(0xffffff)).darken_strong(0.15),
+        bg: BackgroundColor::new(color!(0xffffff))
+            .darken_hover(0.2)
+            .darken_strong(0.3),
         fg: color!(0x202020),
+        border: color!(0x202020, 0.2),
     },
     header: ColorGroup {
         base: color!(0xffffff),
         bg: BackgroundColor::new(color!(0xffffff)).darken_strong(0.15),
         fg: color!(0x202020),
+        border: color!(0x202020, 0.2),
     },
     selector: ColorGroup {
         base: color!(0x000000, 0.3),
@@ -216,11 +229,13 @@ pub static PALETTE_LIGHT: Lazy<Palette> = Lazy::new(|| Palette {
             strong: color!(0x000000, 0.60),
         },
         fg: color!(0x202020),
+        border: color!(0x202020, 0.2),
     },
     selector_active: ColorGroup {
         base: color!(0xfafafa),
         bg: BackgroundColor::new(color!(0xfafafa)).darken_strong(0.15),
         fg: color!(0x202020),
+        border: color!(0x202020, 0.2),
     },
 });
 
@@ -233,6 +248,7 @@ pub static PALETTE_DARK: Lazy<Palette> = Lazy::new(|| Palette {
             strong: color!(0xffffff, 0.06),
         },
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     accent: ColorGroup {
         base: color!(0x78aeed),
@@ -240,6 +256,7 @@ pub static PALETTE_DARK: Lazy<Palette> = Lazy::new(|| Palette {
             .lighten_hover(0.1)
             .darken_strong(0.1),
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     destructive: ColorGroup {
         base: color!(0xff7b63),
@@ -247,6 +264,7 @@ pub static PALETTE_DARK: Lazy<Palette> = Lazy::new(|| Palette {
             .lighten_hover(0.1)
             .darken_strong(0.1),
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     success: ColorGroup {
         base: color!(0x8ff0a4),
@@ -254,6 +272,7 @@ pub static PALETTE_DARK: Lazy<Palette> = Lazy::new(|| Palette {
             .lighten_hover(0.1)
             .darken_strong(0.1),
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     warning: ColorGroup {
         base: color!(0xf8e45c),
@@ -261,6 +280,7 @@ pub static PALETTE_DARK: Lazy<Palette> = Lazy::new(|| Palette {
             .darken_hover(0.1)
             .darken_strong(0.2),
         fg: color!(0x202020),
+        border: color!(0x202020, 0.2),
     },
     error: ColorGroup {
         base: color!(0xff7b63),
@@ -268,6 +288,7 @@ pub static PALETTE_DARK: Lazy<Palette> = Lazy::new(|| Palette {
             .lighten_hover(0.1)
             .darken_strong(0.1),
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     flat: ColorGroup {
         base: color!(0x000000, 0.0),
@@ -277,21 +298,27 @@ pub static PALETTE_DARK: Lazy<Palette> = Lazy::new(|| Palette {
             strong: color!(0xffffff, 0.04),
         },
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     view: ColorGroup {
         base: color!(0x242424),
         bg: BackgroundColor::new(color!(0x242424)).lighten_strong(0.05),
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     card: ColorGroup {
         base: color!(0x303030),
-        bg: BackgroundColor::new(color!(0x303030)).lighten_strong(0.05),
+        bg: BackgroundColor::new(color!(0x303030))
+            .lighten_hover(0.10)
+            .lighten_strong(0.15),
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     header: ColorGroup {
         base: color!(0x303030),
         bg: BackgroundColor::new(color!(0x303030)).lighten_strong(0.05),
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     selector: ColorGroup {
         base: color!(0xffffff, 0.05),
@@ -301,11 +328,13 @@ pub static PALETTE_DARK: Lazy<Palette> = Lazy::new(|| Palette {
             strong: color!(0xffffff, 0.06),
         },
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     selector_active: ColorGroup {
         base: color!(0x242424),
         bg: BackgroundColor::new(color!(0x242424)).lighten_strong(0.05),
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
 });
 
@@ -318,6 +347,7 @@ pub static PALETTE_TANGIBLE: Lazy<Palette> = Lazy::new(|| Palette {
             strong: color!(0xffffff, 0.06),
         },
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     accent: ColorGroup {
         base: color!(0x78aeed),
@@ -325,6 +355,7 @@ pub static PALETTE_TANGIBLE: Lazy<Palette> = Lazy::new(|| Palette {
             .lighten_hover(0.1)
             .darken_strong(0.1),
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     destructive: ColorGroup {
         base: color!(0xff7b63),
@@ -332,6 +363,7 @@ pub static PALETTE_TANGIBLE: Lazy<Palette> = Lazy::new(|| Palette {
             .lighten_hover(0.1)
             .darken_strong(0.1),
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     success: ColorGroup {
         base: color!(0x8ff0a4),
@@ -339,6 +371,7 @@ pub static PALETTE_TANGIBLE: Lazy<Palette> = Lazy::new(|| Palette {
             .lighten_hover(0.1)
             .darken_strong(0.1),
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     warning: ColorGroup {
         base: color!(0xf8e45c),
@@ -346,6 +379,7 @@ pub static PALETTE_TANGIBLE: Lazy<Palette> = Lazy::new(|| Palette {
             .darken_hover(0.1)
             .darken_strong(0.2),
         fg: color!(0x202020),
+        border: color!(0x202020, 0.2),
     },
     error: ColorGroup {
         base: color!(0xff7b63),
@@ -353,6 +387,7 @@ pub static PALETTE_TANGIBLE: Lazy<Palette> = Lazy::new(|| Palette {
             .lighten_hover(0.1)
             .darken_strong(0.1),
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     flat: ColorGroup {
         base: color!(0x000000, 0.0),
@@ -362,25 +397,33 @@ pub static PALETTE_TANGIBLE: Lazy<Palette> = Lazy::new(|| Palette {
             strong: color!(0xffffff, 0.04),
         },
         fg: color!(0xffffff),
+        border: color!(0xffffff, 0.08),
     },
     view: ColorGroup {
         base: color!(0x101010),
-        bg: BackgroundColor { 
-            base: color!(0x101010), 
-            hover: color!(0x202020), 
+        bg: BackgroundColor {
+            base: color!(0x101010),
+            hover: color!(0x202020),
             strong: color!(0x080808),
         },
         fg: color!(0xffffff),
+        border: color!(0x323232),
     },
     card: ColorGroup {
         base: color!(0x202020),
-        bg: BackgroundColor::new(color!(0x202020)).lighten_strong(0.05),
+        bg: BackgroundColor {
+            base: color!(0x202020),
+            hover: color!(0x303030),
+            strong: color!(0x424242),
+        },
         fg: color!(0xffffff),
+        border: color!(0x000000),
     },
     header: ColorGroup {
         base: color!(0x202020),
         bg: BackgroundColor::new(color!(0x202020)).lighten_strong(0.05),
         fg: color!(0xffffff),
+        border: color!(0x323232),
     },
     selector: ColorGroup {
         base: color!(0x202020),
@@ -390,14 +433,16 @@ pub static PALETTE_TANGIBLE: Lazy<Palette> = Lazy::new(|| Palette {
             strong: color!(0x424242),
         },
         fg: color!(0xffffff),
+        border: color!(0x000000),
     },
     selector_active: ColorGroup {
         base: color!(0x04323f),
-        bg: BackgroundColor { 
-            base: color!(0x15424f), 
+        bg: BackgroundColor {
+            base: color!(0x15424f),
             hover: color!(0x245462),
             strong: color!(0x245462),
         },
         fg: color!(0xffffff),
+        border: color!(0x000000),
     },
 });

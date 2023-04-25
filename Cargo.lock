@@ -1546,6 +1546,7 @@ dependencies = [
  "env_logger",
  "iced",
  "iced_lazy",
+ "iced_native",
  "log",
  "once_cell",
  "palette",

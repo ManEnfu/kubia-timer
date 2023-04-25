@@ -1,10 +1,12 @@
-pub use self::palette::{ColorGroup, NamedColor, Palette, PALETTE_LIGHT, PALETTE_DARK, PALETTE_TANGIBLE};
+pub use self::palette::{
+    ColorGroup, NamedColor, Palette, PALETTE_DARK, PALETTE_LIGHT, PALETTE_TANGIBLE,
+};
 
 use iced::{overlay, widget, Color, Vector};
 
 mod palette;
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Theme {
     #[default]
     Light,
@@ -13,6 +15,8 @@ pub enum Theme {
 }
 
 impl Theme {
+    pub const ALL: [Self; 3] = [Self::Light, Self::Dark, Self::Tangible];
+
     pub fn palette(&self) -> &Palette {
         match self {
             Self::Light => &palette::PALETTE_LIGHT,
@@ -243,14 +247,12 @@ impl widget::container::StyleSheet for Theme {
 
         match style {
             Container::Transparent => Default::default(),
-            Container::ColorGroup(cg) => {
-                widget::container::Appearance {
-                    text_color: Some(cg.fg),
-                    background: Some(cg.bg.base.into()),
-                    border_radius: 6.0,
-                    ..Default::default()
-                }
-            }
+            Container::ColorGroup(cg) => widget::container::Appearance {
+                text_color: Some(cg.fg),
+                background: Some(cg.bg.base.into()),
+                border_radius: 6.0,
+                ..Default::default()
+            },
             Container::Solid(name) => {
                 let cg = palette.group(*name);
                 widget::container::Appearance {
@@ -292,11 +294,27 @@ pub enum Menu {
     Default,
 }
 
+impl From<PickList> for Menu {
+    fn from(_value: PickList) -> Self {
+        Self::Default
+    }
+}
+
 impl overlay::menu::StyleSheet for Theme {
     type Style = Menu;
 
-    fn appearance(&self, style: &Self::Style) -> overlay::menu::Appearance {
-        todo!()
+    fn appearance(&self, _style: &Self::Style) -> overlay::menu::Appearance {
+        let palette = self.palette();
+
+        overlay::menu::Appearance {
+            text_color: palette.card.fg,
+            background: palette.card.bg.base.into(),
+            border_width: 1.0,
+            border_radius: 6.0,
+            border_color: palette.card.bg.hover,
+            selected_text_color: palette.card.fg,
+            selected_background: palette.card.bg.hover.into(),
+        }
     }
 }
 
@@ -311,16 +329,31 @@ impl widget::pick_list::StyleSheet for Theme {
 
     fn active(
         &self,
-        style: &<Self as widget::pick_list::StyleSheet>::Style,
+        _style: &<Self as widget::pick_list::StyleSheet>::Style,
     ) -> widget::pick_list::Appearance {
-        todo!()
+        let palette = self.palette();
+
+        widget::pick_list::Appearance {
+            text_color: palette.neutral.fg,
+            placeholder_color: palette.neutral.fg,
+            handle_color: palette.neutral.fg,
+            background: palette.neutral.bg.base.into(),
+            border_radius: 6.0,
+            border_width: 0.0,
+            border_color: Color::TRANSPARENT,
+        }
     }
 
     fn hovered(
         &self,
         style: &<Self as widget::pick_list::StyleSheet>::Style,
     ) -> widget::pick_list::Appearance {
-        todo!()
+        let palette = self.palette();
+
+        widget::pick_list::Appearance {
+            background: palette.neutral.bg.hover.into(),
+            ..self.active(style)
+        }
     }
 }
 
@@ -408,7 +441,7 @@ impl widget::rule::StyleSheet for Theme {
         let palette = self.palette();
 
         widget::rule::Appearance {
-            color: palette.view.bg.strong,
+            color: palette.view.border,
             width: 1,
             radius: 0.0,
             fill_mode: widget::rule::FillMode::Full,
@@ -517,7 +550,7 @@ impl widget::text::StyleSheet for Theme {
             Text::Dim => {
                 let mut color = self.palette().view.fg;
                 color.a = color.a * 0.5;
-                widget::text::Appearance{ color: Some(color) }
+                widget::text::Appearance { color: Some(color) }
             }
             Text::Color(c) => widget::text::Appearance { color: Some(c) },
         }

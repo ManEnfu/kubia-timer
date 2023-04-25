@@ -2,19 +2,19 @@
 
 use iced::{window, Application};
 
-use crate::application::KubiaTimer;
+use crate::gui::application::KTApplication;
 
-pub mod application;
 pub mod data;
+pub mod gui;
 
 pub mod tangible;
 
 fn main() -> iced::Result {
     env_logger::init();
 
-    KubiaTimer::run(iced::Settings {
+    KTApplication::run(iced::Settings {
         id: Some("com.github.manenfu.KubiaTimer".to_string()),
-        default_text_size: 18.0,
+        default_text_size: 16.0,
         window: window::Settings {
             size: (800, 600),
             ..Default::default()
